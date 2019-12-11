@@ -8,27 +8,34 @@ public class SimpleMove : MonoBehaviour
 {
 
     public float speed;//移动速度
+    public float smooth;//转向速度
 
     public Text bugtext;//测试用
     
     Vector3 direction;//当前移动方向
     Vector2 coordinate;//当前坐标
 
-    Quaternion rota;//当前朝向（未实装）
+    Quaternion rota;//目标朝向
 
     Queue<Vector3> directionQ;//输入接收
 
 
     bool hasChangeDirection;//判断是否可以改变方向
+    bool isStop;
 
     void Start()
     {
         speed = 10;
+        smooth = 20;
+
         direction = Vector3.zero;
         rota = Quaternion.Euler(0, 0, 0);
+
         hasChangeDirection = false;
+        isStop = false;
 
         directionQ = new Queue<Vector3>();
+        transform.position = PointFix(transform.position);
     }
 
     // Update is called once per frame
@@ -56,6 +63,8 @@ public class SimpleMove : MonoBehaviour
         else
         str.Append("下一个方向： "+DtoD(directionQ.Peek()));
 
+        str.Append('\n'+"IsStop: " +isStop+'\n');
+
         bugtext.text = str.ToString();
 
     }
@@ -69,10 +78,12 @@ public class SimpleMove : MonoBehaviour
                 transform.position = PointFix(transform.position);
             }
         }
-        
+
         //移动玩家
-        //transform.rotation=rota;
-        transform.position += direction * speed * Time.deltaTime;
+        if (!isStop) { 
+        transform.rotation = Quaternion.Lerp(transform.rotation, rota, smooth*Time.deltaTime);//转向
+        transform.position += direction * speed * Time.deltaTime;//位移
+        }
     }
     Vector2 CheckPoint(Vector3 input)
     {
@@ -114,16 +125,20 @@ public class SimpleMove : MonoBehaviour
             {
                 directionQ.Dequeue();
             }//移除同向的输入。
+            isStop = false;
             if (directionQ.Count != 0 && !hasChangeDirection)
             {
                 direction = directionQ.Dequeue();
+                isStop = false;
+                SetRotation();
+
                 hasChangeDirection = true;
                 return true;
             }
         }
         return false;
     }
-    bool ToNextPoint()
+    bool ToNextPoint()//判断是否已经到达下一格
     {
 
         if (coordinate == CheckPoint(transform.position))
@@ -196,6 +211,32 @@ public class SimpleMove : MonoBehaviour
         var re = new Vector3(Mathf.FloorToInt(input[0])+0.5f, Mathf.FloorToInt(input[1])+0.5f, input[2]);
         return re;
     }
+    void SetRotation()
+    {
+        if (direction == Vector3.up)
+            rota = Quaternion.Euler(0, 0, 0);
+        if (direction == Vector3.down)
+            rota = Quaternion.Euler(0, 0, 180);
+        if (direction == Vector3.left)
+            rota = Quaternion.Euler(0, 0, 90f);
+        if (direction == Vector3.right)
+            rota = Quaternion.Euler(0, 0, 270f);
+    }
 
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        isStop = true;
+        direction = Vector3.zero;
+        transform.position = PointFix(transform.position);
+
+        directionQ.Clear();
+    }
+    void OnCollisionStay2D(Collision2D collision)
+    {
+        direction = Vector3.zero;
+        transform.position = PointFix(transform.position);
+
+        directionQ.Clear();
+    }
 
 }
