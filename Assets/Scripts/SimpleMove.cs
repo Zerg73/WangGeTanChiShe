@@ -14,7 +14,7 @@ public class SimpleMove : MonoBehaviour
 
     public Vector3[] fang= {Vector3.up,Vector3.down,Vector3.left,Vector3.right,Vector3.zero };
 
-    Vector3 direction;//当前移动方向
+    public Vector3 direction;//当前移动方向
     Vector2 coordinate;//当前坐标
     Vector3 prePosition;//上一帧的坐标。
 
@@ -95,27 +95,31 @@ public class SimpleMove : MonoBehaviour
 
         prePosition = transform.position;
 
-        transform.rotation = Quaternion.Lerp(transform.rotation, rota, smooth * Time.deltaTime);//转向
         rb2d.velocity = direction * speed;
+        transform.rotation = Quaternion.Lerp(transform.rotation, rota, smooth * Time.deltaTime);//转向
 
     }
     void OnCollisionEnter2D(Collision2D collision)
     {
         Debug.Log("碰撞发生");
-        direction = fang[4];
 
-        //transform.position = PointFix(transform.position);
+        transform.position = PointFix(transform.position);
+        
+        
 
         foreach (var temp in collision.contacts)
         {
             stopSet.Add(Vector3Int.RoundToInt(Vector3.Normalize(temp.point - new Vector2(transform.position.x, transform.position.y))));
+            if (stopSet.Contains(direction))
+            {
+                direction = fang[4];
+            }
         }
 
     }
-    private void OnCollisionStay2D(Collision2D collision)
+    void OnCollisionStay2D(Collision2D collision)
     {
         Debug.Log("持续碰撞");
-        ContactPoint2D con = collision.GetContact(0);
 
         foreach (var temp in collision.contacts)
         {
@@ -149,8 +153,7 @@ public class SimpleMove : MonoBehaviour
     }
     Vector2 CheckPoint(Vector3 input)//返回目标所在整数节点，例如（0，0）至（1，1）这个矩形的坐标是（0，0）
     {
-        Vector2 output = new Vector2(Mathf.FloorToInt(input[0]), Mathf.FloorToInt(input[1]));
-        return output;
+        return new Vector2(Mathf.FloorToInt(input[0]), Mathf.FloorToInt(input[1]));
     }
 
     void GetInput()
@@ -241,16 +244,16 @@ public class SimpleMove : MonoBehaviour
     }
     bool IsOverHalf(Vector3 pos, Vector3 dire)
     {
-        if (dire == Vector3.up)
+        if (dire == fang[0])
             return pos.y >= CheckPoint(pos).y+0.5;
-        if (dire == Vector3.down)
+        if (dire == fang[1])
             return pos.y <= CheckPoint(pos).y + 0.5;
-        if (dire == Vector3.left)
+        if (dire == fang[2])
             return pos.x <= CheckPoint(pos).x + 0.5;
-        if (dire == Vector3.right)
+        if (dire == fang[3])
             return pos.x >= CheckPoint(pos).x + 0.5;
 
-        if (dire == Vector3.zero)
+        if (dire == fang[4])
             return true;
 
         Debug.Log("IsOverHalf Direction Error.");

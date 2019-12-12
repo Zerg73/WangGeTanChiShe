@@ -278,6 +278,7 @@ MonoBehaviour:
   - {x: -1, y: 0, z: 0}
   - {x: 1, y: 0, z: 0}
   - {x: 0, y: 0, z: 0}
+  direction: {x: 0, y: 0, z: 0}
 --- !u!58 &232389377
 CircleCollider2D:
   m_ObjectHideFlags: 0

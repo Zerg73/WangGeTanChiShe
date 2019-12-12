@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\DrawLine_Point.cs" />
+    <Compile Include="Assets\Scripts\F.cs" />
     <Compile Include="Assets\Scripts\GameManager.cs" />
     <Compile Include="Assets\Scripts\LinesProperties.cs" />
     <Compile Include="Assets\Scripts\SimpleMove.cs" />
