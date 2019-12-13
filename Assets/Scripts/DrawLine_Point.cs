@@ -6,11 +6,8 @@ public class DrawLine_Point : MonoBehaviour
 {
     // Start is called before the first frame update
 
-    public Transform linesSet;
-    public GameObject linePrefab;
     LineRenderer lr;
 
-    public Vector3 startpos, endpos;
 
     
     void Start()
@@ -33,17 +30,9 @@ public class DrawLine_Point : MonoBehaviour
 
     void SetLineProperty()
     {
-        lr = linePrefab.GetComponent<LineRenderer>();
-        lr.startColor = Color.red;
-        lr.endColor = Color.red;
-
-        lr.startWidth = 0.6f;
-        lr.endWidth = 0.6f;
     }
 
     public void SetPosition()
     {
-        lr.SetPosition(0, startpos);
-        lr.SetPosition(1, endpos);
     }
 }

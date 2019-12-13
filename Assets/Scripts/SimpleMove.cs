@@ -20,7 +20,7 @@ public class SimpleMove : MonoBehaviour
 
 
     Quaternion rota;//目标朝向
-    Queue<Vector3> directionQ;//输入接收
+    public Queue<Vector3> directionQ;//输入接收
 
     Rigidbody2D rb2d;
 
