@@ -7,9 +7,11 @@ public class GameManager : MonoBehaviour
 {
     GameObject wallPrefab;//墙体预制体
     GameObject linePrefab;//线条预制体
-    
+    GameObject gridPrefab;//网格预制体
+
     GameObject env;//环境物体的父节点
     GameObject lines;//线条的父节点
+    GameObject grids;//网格的父节点
     Text infoText;
     GameObject player, follower;//P1和P2
     Transform pt, ft;//玩家的 Transform 组件
@@ -17,7 +19,7 @@ public class GameManager : MonoBehaviour
     Rigidbody2D prb, frb;//玩家的刚体组件
     public Vector2 pd, fd;//玩家移动方向
 
-    float speed,smooth;//速度以及转向速度
+    public float speed, smooth;//速度以及转向速度
 
     bool isReversed;//控制反向
 
@@ -31,18 +33,20 @@ public class GameManager : MonoBehaviour
     {
         linePrefab = Resources.Load<GameObject>("Prefabs/Line");
         wallPrefab = Resources.Load<GameObject>("Prefabs/Wall");
+        gridPrefab = Resources.Load<GameObject>("Prefabs/GridLine");
 
         linePrefab.GetComponent<LineRenderer>().material = Resources.Load<Material>("Materials/Red");
         linePrefab.GetComponent<LineRenderer>().startWidth = 0.3f;
         linePrefab.GetComponent<LineRenderer>().endWidth = 0.3f;
-        linePrefab.GetComponent<LineRenderer>().startColor=Color.red;
-        linePrefab.GetComponent<LineRenderer>().endColor=Color.red;
+        linePrefab.GetComponent<LineRenderer>().startColor = Color.red;
+        linePrefab.GetComponent<LineRenderer>().endColor = Color.red;
 
         infoText = GameObject.Find("InfoText").GetComponent<Text>();
         env = GameObject.Find("Env");
         lines = GameObject.Find("Lines");
         player = GameObject.Find("Player");
         follower = GameObject.Find("Follower");
+        grids = GameObject.Find("Grids");
 
 
         pt = player.transform;
@@ -69,9 +73,10 @@ public class GameManager : MonoBehaviour
         directionQ = new Queue<Vector2>();
 
         SetWall();
+        DrawGrid();
     }
 
-    
+
 
     void Update()
     {
@@ -79,9 +84,7 @@ public class GameManager : MonoBehaviour
 
         SetDirection();
 
-        Rotate();
-        Move();
-        
+
         //Draw();
     }
 
@@ -91,7 +94,7 @@ public class GameManager : MonoBehaviour
         {
             isReversed = !isReversed;
         }
-        
+
         if ((Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)))
         {
             directionQ.Enqueue(Vector2.up);
@@ -122,10 +125,9 @@ public class GameManager : MonoBehaviour
             //后续就没有了
         }
 
-        if (directionQ.Count != 0)
+        if (directionQ.Count != 0)//先判断输入队列是否有值
         {
-            Debug.Log("当前方向： ");
-            if (pd != Vector2.zero)
+            if (pp.CanRotate())//判断是否可以转向
             {
                 do
                 {
@@ -135,14 +137,14 @@ public class GameManager : MonoBehaviour
                     }
                     else
                     {
-                        pd = directionQ.Dequeue();
+                        pp.direction = directionQ.Dequeue();
                         break;
                     }
                 } while (directionQ.Count != 0);
             }
             else
             {
-                pd = directionQ.Peek();
+                pp.direction = directionQ.Peek();
                 pp.stop = false;
             }
 
@@ -153,79 +155,10 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            if (pp.stop)
-            {
-                pd = Vector2.zero;
-            }
-            if (fp.stop)
-            {
-                fd = Vector2.zero;
-            }
+
         }
-
-
-           
-
-
-        
-        
-
-
 
     }
-    void Rotate()//调整朝向
-    {
-        if (pd == Vector2.up)
-        {
-            prb.rotation = Mathf.Lerp(prb.rotation, 0, smooth*Time.deltaTime);
-
-        }
-        if (pd == Vector2.left)
-        {
-            prb.rotation = Mathf.Lerp(prb.rotation, 90, smooth * Time.deltaTime);
-
-        }
-        if (pd == Vector2.down)
-        {
-            prb.rotation = Mathf.Lerp(prb.rotation, 180, smooth * Time.deltaTime);
-
-        }
-        if (pd == Vector2.right)
-        {
-            prb.rotation = Mathf.Lerp(prb.rotation, 270, smooth * Time.deltaTime);
-
-        }
-
-        if (fd == Vector2.up)
-        {
-            frb.rotation = Mathf.Lerp(frb.rotation, 0, smooth * Time.deltaTime);
-
-        }
-        if (fd == Vector2.left)
-        {
-            frb.rotation = Mathf.Lerp(frb.rotation, 90, smooth * Time.deltaTime);
-
-        }
-        if (fd == Vector2.down)
-        {
-            frb.rotation = Mathf.Lerp(frb.rotation, 180, smooth * Time.deltaTime);
-
-        }
-        if (fd == Vector2.right)
-        {
-            frb.rotation = Mathf.Lerp(frb.rotation, 270, smooth * Time.deltaTime);
-
-        }
-    }
-
-    void Move()//运动的最终函数，所有计算应在前面计算完
-    {
-        prb.velocity = pd * speed;
-        frb.velocity = fd * speed;
-    }
-
-
-
 
     Vector2 CheckPoint(Vector3 input)//返回目标所在整数节点，例如（0，0）至（1，1）这个矩形的坐标是（0，0）
     {
@@ -285,15 +218,32 @@ public class GameManager : MonoBehaviour
     {
 
     }
+    void DrawGrid()
+    {
+        gridPrefab.transform.localScale = new Vector3(0.01f, cornerPos.y * 2, 1);
+        for (int x = -Mathf.RoundToInt(cornerPos.x); x <= cornerPos.x; x++)//画竖线
+        {
+            var temp = Instantiate(gridPrefab, new Vector3(x, 0, 0), transform.rotation);
+            temp.transform.parent = grids.transform;
+        }
+        gridPrefab.transform.localScale = new Vector3(cornerPos.x * 2, 0.01f, 1);
+        for (int y = -Mathf.RoundToInt(cornerPos.y); y <= cornerPos.y; y++)//画横线
+        {
+            var temp = Instantiate(gridPrefab, new Vector3(0, y, 0), transform.rotation);
+            temp.transform.parent = grids.transform;
+        }
+
+
+    }
 
     Vector2 PositionToCoordinate(Vector3 input)//以左上角方格为00，暂时没用
     {
         return new Vector2(cornerPos.y - input.y, cornerPos.x + input.x);
     }
 
-    Vector3 SetLineNumber(Vector2 pos,Vector3 dir)//上下左右，0123
+    Vector3 SetLineNumber(Vector2 pos, Vector3 dir)//上下左右，0123
     {
-        
+
         if (dir == Vector3.up)
         {
             return new Vector3(pos.x, pos.y, 0);
@@ -322,24 +272,24 @@ public class GameManager : MonoBehaviour
     void SetWall()
     {
         Quaternion r = Quaternion.Euler(0, 0, 0);
-        Vector3[] wallPos = { new Vector3(0, cornerPos.y + 0.5f, 0), new Vector3(0, -cornerPos.y - 0.5f, 0), new Vector3(-cornerPos.x - 0.5f, 0, 0), new Vector3(cornerPos.x + 0.5f, 0, 0)};
+        Vector3[] wallPos = { new Vector3(0, cornerPos.y + 0.5f, 0), new Vector3(0, -cornerPos.y - 0.5f, 0), new Vector3(-cornerPos.x - 0.5f, 0, 0), new Vector3(cornerPos.x + 0.5f, 0, 0) };
         List<GameObject> temp = new List<GameObject>();
-        for(int i = 0; i < 4; i++)
+        for (int i = 0; i < 4; i++)
         {
-            temp.Add( Instantiate(wallPrefab, wallPos[i], r));
+            temp.Add(Instantiate(wallPrefab, wallPos[i], r));
         }
 
 
-        
+
         temp[0].transform.localScale = new Vector3(cornerPos.x * 2, 1, 1);
         temp[0].name = "NorthWall";
-        
+
         temp[1].transform.localScale = new Vector3(cornerPos.x * 2, 1, 1);
         temp[1].name = "SouthWall";
-        
+
         temp[2].transform.localScale = new Vector3(1, cornerPos.y * 2, 1);
         temp[2].name = "WestWall";
-        
+
         temp[3].transform.localScale = new Vector3(1, cornerPos.y * 2, 1);
         temp[3].name = "EastWall";
 
@@ -347,9 +297,6 @@ public class GameManager : MonoBehaviour
         temp[1].transform.parent = env.transform;
         temp[2].transform.parent = env.transform;
         temp[3].transform.parent = env.transform;
-
-        
-
     }
 
     void Test()
@@ -362,5 +309,4 @@ public class GameManager : MonoBehaviour
         Debug.Log("Game Over.");
         //do something...
     }
-
 }
